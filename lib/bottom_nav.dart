@@ -7,7 +7,7 @@ class BottomNav extends StatelessWidget {
   const BottomNav({Key? key}) : super(key: key);
   static List<Map<String, dynamic>> navItems = [
     {"icon": Icons.wallet, "label": "Card Payment", 'setIndex': 0},
-    {"icon": Icons.account_balance, "label": "Check OUt", 'setIndex': 1},
+    {"icon": Icons.account_balance, "label": "Check Out", 'setIndex': 1},
   ];
   @override
   Widget build(BuildContext context) {

@@ -6,6 +6,9 @@ import 'package:dio_smart_retry/dio_smart_retry.dart';
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 
 abstract class BaseService {
+  BaseService() {
+    _init();
+  }
   late final Dio _dio;
   var options = BaseOptions(
     baseUrl: "https://api.paystack.co/",
@@ -19,8 +22,8 @@ abstract class BaseService {
   );
   HttpClient client = HttpClient();
 
-  _init({String? baseUrl}) {
-    _dio = Dio(options.copyWith(baseUrl: baseUrl));
+  _init() {
+    _dio = Dio(options);
 
     _dio.interceptors.add(PrettyDioLogger(
         requestHeader: true,
@@ -55,9 +58,9 @@ abstract class BaseService {
 
   Future<Response> post(String path, Map<String, dynamic> obj,
       {String? token, String? pin, int? retry}) async {
+    print("jjj");
     if (token != null) {
       _dio.options.headers["Authorization"] = "Bearer $token";
-      // _dio.options.headers["Authorization"] = "Bearer $token";
       if (pin != null) {
         _dio.options.headers["pin"] = pin;
       }

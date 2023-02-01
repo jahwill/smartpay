@@ -1,6 +1,4 @@
-import 'dart:convert';
 import 'dart:io';
-import 'package:dio/dio.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_paystack/flutter_paystack.dart';
 import 'package:animations/animations.dart';
@@ -10,9 +8,11 @@ import 'package:smartpay/cores/service/base_service.dart';
 import 'package:smartpay/utility/helper/app_global_context.dart';
 import 'package:smartpay/utility/helper/const_utility.dart';
 import 'package:smartpay/utility/helper/helper_utilities.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 import 'components/inputs/inputfield.dart';
 import 'components/msc/buttons.dart';
+import 'cores/service/paystack_service.dart';
 
 class CardPayment extends StatefulWidget {
   const CardPayment({Key? key}) : super(key: key);
@@ -78,35 +78,20 @@ class _CardPaymentState extends State<CardPayment> {
     return SafeArea(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 2.0),
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              SizedBox(
-                height: 200,
-                width: size.width * 0.7,
-                child: Image.asset(
-                  "assets/images/paystack_logo.png",
-                  color: Colors.cyan.shade700,
-                ),
-              ),
-              const SizedBox(height: 150),
-              Center(
-                child: MaterialButton(
-                  color: Theme.of(context).primaryColor,
-                  height: 50,
-                  onPressed: () {
-                    fundWithPayStack(context);
-                  },
-                  child: Text(
-                    'Make Payment',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyText1
-                        ?.copyWith(color: Colors.white),
-                  ),
-                ),
-              ),
-            ],
+        child: Center(
+          child: MaterialButton(
+            color: Theme.of(context).primaryColor,
+            height: 50,
+            onPressed: () {
+              fundWithPayStack(context);
+            },
+            child: Text(
+              'Make Payment',
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyText1
+                  ?.copyWith(color: Colors.white),
+            ),
           ),
         ),
       ),
@@ -217,137 +202,6 @@ class _CardPaymentState extends State<CardPayment> {
             Navigator.pop(context ?? contxt);
             chargeCard(amount);
           });
-    }
-  }
-}
-
-class CheckOutPayment extends StatefulWidget {
-  const CheckOutPayment({Key? key}) : super(key: key);
-
-  @override
-  State<CheckOutPayment> createState() => _CheckOutPaymentState();
-}
-
-class _CheckOutPaymentState extends State<CheckOutPayment> {
-  final plugin = PaystackPlugin();
-
-  @override
-  void initState() {
-    super.initState();
-    plugin.initialize(publicKey: payStackKey);
-  }
-
-  Future<String> createAccessCode(skTest, _getReference, int amount) async {
-    Map<String, dynamic> payload = {
-      "amount": 100 * amount,
-      "email": "meetjahwill@gmail.com",
-      "reference": _getReference
-    };
-
-    InitPayStack service = InitPayStack();
-
-    final Response? res = await service.initPayment(skTest, payload: payload);
-
-    if (res != null) {
-      String accessCode = res.data['data']['access_code'];
-      return accessCode;
-    } else {
-      return '';
-    }
-  }
-
-  String _getRefrence() {
-    var platForm = (Platform.isIOS) ? 'iOS' : 'Android';
-    final thisDate = DateTime.now().microsecondsSinceEpoch;
-    return 'ChargeFrom${platForm}_$thisDate';
-  }
-
-  chargeCard(int amount) async {
-    var charge = Charge()
-      ..amount = 100 * amount
-      ..reference = _getRefrence()
-      ..putCustomField('custom_id', 'Jtech Ltd')
-      ..email = 'meetjahwill@gmail.com'
-      ..accessCode =
-          await createAccessCode(payStackSecreteKey, _getRefrence(), amount);
-
-    CheckoutResponse response = await plugin.checkout(context,
-        method: CheckoutMethod.bank, charge: charge);
-
-    if (response.status == true) {
-      AnimatedAlertModal.emptyModalWithNoTitle(context,
-          body: Text(
-              'Your $ngn$amount Funding was Successful Check Your Wallet For Balance '));
-    } else {
-      AnimatedAlertModal.emptyModalWithNoTitle(
-        context,
-        // bgColor: Colors.red,
-        body: Text('Your funding failed'),
-      );
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    var size = MediaQuery.of(context).size;
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          Align(
-            alignment: Alignment.center,
-            child: SizedBox(
-              height: 200,
-              width: size.width * 0.7,
-              child: Image.asset(
-                "assets/images/paystack_logo.png",
-                color: Colors.cyan.shade700,
-              ),
-            ),
-          ),
-          const SizedBox(height: 150),
-          Center(
-            child: MaterialButton(
-              color: Theme.of(context).primaryColor,
-              height: 50,
-              onPressed: () {
-                chargeCard(2000);
-              },
-              child: Text(
-                'Make Payment',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyText1
-                    ?.copyWith(color: Colors.white),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class InitPayStack extends BaseService {
-  Future<Response?> initPayment(String token,
-      {required Map<String, dynamic> payload}) async {
-    Response? res;
-
-    try {
-      res = await post(
-        'transaction/initialize',
-        payload,
-        token: token,
-      );
-      return res;
-    } on DioError catch (err) {
-      if (err.type == DioErrorType.other) {
-      } else {
-        res = err.response;
-      }
-      return res;
-    } catch (e) {
-      return null;
     }
   }
 }
